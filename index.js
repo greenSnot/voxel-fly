@@ -39,6 +39,8 @@ Fly.prototype.bindKeyEvents = function(el) {
       } else {
         if (!self.flying && spaceUpAfterFirstDown) {
           self.startFlying()
+        } else if (self.flying && spaceUpAfterFirstDown) {
+          self.stopFlying()
         }
       }
       spaceUpAfterFirstDown = false
@@ -81,3 +83,4 @@ Fly.prototype.stopFlying = function() {
   physical.subjectTo(game.gravity)
   game.removeListener('tick', physical.onGameTick)
 }
+

@@ -1,10 +1,10 @@
 {
-  "name": "voxel-fly",
+  "name": "voxel-fly-cc",
   "version": "0.1.2",
   "description": "fly around in voxel.js games",
   "repository": {
     "type": "git",
-    "url": "git://github.com/maxogden/voxel-fly.git"
+    "url": "git://github.com/greensnot/voxel-fly.git"
   },
   "author": "Max Ogden <max@maxogden.com>",
   "license": "BSD",
