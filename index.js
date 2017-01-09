@@ -3,12 +3,14 @@ var vkey = require('vkey')
 var events = require('events')
 
 var game
+var fly
 
 module.exports = function(gameInstance) {
   // cache the game instance
   game = gameInstance
   return function makeFly(physical, noKeyEvents) {
-    return new Fly(physical, noKeyEvents)
+    fly = new Fly(physical, noKeyEvents)
+    return fly
   }
 }
 
@@ -18,46 +20,61 @@ function Fly(physical, noKeyEvents) {
   if (!noKeyEvents) this.bindKeyEvents()
 }
 
+var counter = 0
+var spaceUpAfterFirstDown = false
+var first = Date.now()
+function onKeyDown(ev) {
+  var key = vkey[ev.keyCode] || ev.char
+  var binding = game.keybindings[key]
+  if (binding !== "jump") return
+  if (counter === 1) {
+    if (Date.now() - first > 300) {
+      spaceUpAfterFirstDown = false
+      return first = Date.now()
+    } else {
+      if (!fly.flying && spaceUpAfterFirstDown) {
+        fly.startFlying()
+      } else if (fly.flying && spaceUpAfterFirstDown) {
+        fly.stopFlying()
+      }
+    }
+    spaceUpAfterFirstDown = false
+    return counter = 0
+  }
+  if (counter === 0) {
+    first = Date.now()
+    counter += 1
+  }
+}
+
+function onKeyUp(ev) {
+  var key = vkey[ev.keyCode] || ev.char
+  if (key === '<space>' && counter === 1) {
+    spaceUpAfterFirstDown = true
+  }
+}
+
 Fly.prototype.bindKeyEvents = function(el) {
   if (!el) el = document.body
-  var self = this
-  var counter = 0
-  var spaceUpAfterFirstDown = false
-  var first = Date.now()
+
+  if (this.is_bind) {
+    return
+  }
+  this.is_bind = true;
+
   ever(el)
     .on('keydown', onKeyDown)
     .on('keyup', onKeyUp)
-  
-  function onKeyDown(ev) {
-    var key = vkey[ev.keyCode] || ev.char
-    var binding = game.keybindings[key]
-    if (binding !== "jump") return
-    if (counter === 1) {
-      if (Date.now() - first > 300) {
-        spaceUpAfterFirstDown = false
-        return first = Date.now()
-      } else {
-        if (!self.flying && spaceUpAfterFirstDown) {
-          self.startFlying()
-        } else if (self.flying && spaceUpAfterFirstDown) {
-          self.stopFlying()
-        }
-      }
-      spaceUpAfterFirstDown = false
-      return counter = 0
-    }
-    if (counter === 0) {
-      first = Date.now()
-      counter += 1
-    }
+}
+
+Fly.prototype.unBindKeyEvents = function(el) {
+  if (!el) el = document.body
+  if (this.flying) {
+    this.stopFlying()
   }
-  
-  function onKeyUp(ev) {
-    var key = vkey[ev.keyCode] || ev.char
-    if (key === '<space>' && counter === 1) {
-      spaceUpAfterFirstDown = true
-    }
-  }
+  ever(el).removeListener('keydown', onKeyDown)
+  ever(el).removeListener('keyup', onKeyUp)
+  this.is_bind = false
 }
 
 Fly.prototype.startFlying = function() {
@@ -83,4 +100,3 @@ Fly.prototype.stopFlying = function() {
   physical.subjectTo(game.gravity)
   game.removeListener('tick', physical.onGameTick)
 }
-
